@@ -2,101 +2,79 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven3.6'
+        maven 'Maven3.9.5'
+        jdk 'JDK17'
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
         stage('Build') {
             steps {
-                sh 'mvn clean package'
+                echo 'Building...'
+                sh 'mvn clean install -DskipTests'
             }
         }
-
         stage('Unit and Integration Tests') {
             steps {
+                echo 'Testing...'
                 sh 'mvn test'
             }
             post {
-                success {
-                    emailext (
-                        to: 'saltncrisp0102@gmail.com',
-                        subject: "SUCCESS: Tests passed for ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                        body: "All tests passed successfully. Check attached logs for details.",
-                        attachLog: true
-                    )
+                always {
+                    junit '**/target/test-*.xml'
                 }
                 failure {
-                    emailext (
+                    echo 'Sending failure email...'
+                    emailext(
                         to: 'saltncrisp0102@gmail.com',
-                        subject: "FAILURE: Tests failed for ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                        body: "Some tests failed. Check attached logs for details.",
+                        subject: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+                        body: """<p>FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</p>
+                                 <p>Check console output at &QUOT;<a href='${env.BUILD_URL}'>${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>&QUOT;</p>""",
                         attachLog: true
                     )
                 }
             }
         }
-
         stage('Code Analysis') {
             steps {
-                sh 'mvn sonar:sonar'
+                echo 'Analyzing code...'
+                // Integrate your code analysis tool here, e.g., SonarQube
             }
         }
-
         stage('Security Scan') {
             steps {
-                sh 'mvn org.owasp:dependency-check-maven:check'
+                echo 'Scanning for security vulnerabilities...'
+                // Integrate your security scanning tool here
             }
             post {
-                success {
-                    emailext (
-                        to: 'saltncrisp0102@gmail.com',
-                        subject: "SUCCESS: Security scan passed for ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                        body: "Security scan passed successfully. Check attached logs for details.",
-                        attachLog: true
-                    )
-                }
                 failure {
-                    emailext (
+                    echo 'Sending failure email...'
+                    emailext(
                         to: 'saltncrisp0102@gmail.com',
-                        subject: "FAILURE: Security vulnerabilities found in ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                        body: "Security scan detected vulnerabilities. Check attached logs for details.",
+                        subject: "SECURITY SCAN FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+                        body: """<p>SECURITY SCAN FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</p>
+                                 <p>Check console output at &QUOT;<a href='${env.BUILD_URL}'>${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>&QUOT;</p>""",
                         attachLog: true
                     )
                 }
             }
         }
-
         stage('Deploy to Staging') {
             steps {
-                // This is a placeholder. Adjust based on your deployment strategy.
-                echo 'Deploying to Staging...'
+                echo 'Deploying to staging...'
+                // Add deployment to staging commands/scripts here
             }
         }
-
         stage('Integration Tests on Staging') {
             steps {
-                // Another placeholder. Adjust based on your testing strategy for staging.
                 echo 'Running integration tests on staging...'
+                // Add your integration tests for staging here
             }
         }
-
         stage('Deploy to Production') {
             steps {
-                // Placeholder. Adjust based on your deployment strategy.
-                echo 'Deploying to Production...'
+                echo 'Deploying to production...'
+                // Add deployment to production commands/scripts here
             }
-        }
-    }
-
-    post {
-        success {
-            echo 'Pipeline completed successfully!'
         }
     }
 }

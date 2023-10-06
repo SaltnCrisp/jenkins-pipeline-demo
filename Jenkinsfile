@@ -37,7 +37,7 @@ pipeline {
         stage('Code Analysis') {
             steps {
                 echo 'Analyzing code...'
-                // Integrate your code analysis tool here, e.g., SonarQube
+                // Integrate code analysis tool here
             }
         }
         stage('Security Scan') {
@@ -67,7 +67,7 @@ pipeline {
         stage('Integration Tests on Staging') {
             steps {
                 echo 'Running integration tests on staging...'
-                // Add your integration tests for staging here
+                // Add integration tests for staging here
             }
         }
         stage('Deploy to Production') {
